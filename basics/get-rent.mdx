@@ -1,0 +1,14 @@
+---
+title: Get Rent
+description: 
+---
+
+```js
+import { createSolanaRpc } from "@solana/kit";
+
+const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const space = BigInt(0);
+const rent = await rpc.getMinimumBalanceForRentExemption(space).send();
+
+console.log(rent); 
+```

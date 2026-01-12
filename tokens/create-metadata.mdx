@@ -1,0 +1,35 @@
+---
+title: Create Metadata
+description: Create and add metadata for a Solana SPL token
+---
+
+```tsx
+import { createSignerFromKeypair, generateSigner, signerIdentity } from "@metaplex-foundation/umi";
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults'
+import { base58 } from '@metaplex-foundation/umi/serializers';
+import walletSecret from './wallet.json' assert { type: "json" };
+import { create } from '@metaplex-foundation/mpl-core';
+
+const umi = createUmi("https://api.devnet.solana.com", "confirmed");
+let keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(walletSecret));
+const signer = createSignerFromKeypair(umi, keypair);
+
+umi.use(signerIdentity(signer))
+
+const tokenAddress = generateSigner(umi); // token address
+const owner = generateSigner(umi);
+
+const createTokenMetadata = async () => {
+    const tx = await create(umi, {
+        name: 'Test Token',
+        uri: 'https://example.com/token.json',
+        asset: tokenAddress,
+        owner: owner.publicKey, // optional, will default to payer
+    }).sendAndConfirm(umi);
+    const txSig = base58.deserialize(tx.signature)[0];
+    console.log(`Transaction: ${txSig}`);
+}
+
+createTokenMetadata();
+
+```

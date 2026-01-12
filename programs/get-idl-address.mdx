@@ -1,0 +1,25 @@
+---
+title: Get IDL Address
+description: Get the address of the programs IDL
+---
+
+## New Way
+```tsx
+
+```
+
+## Old Way
+```tsx
+import { PublicKey } from '@solana/kit';
+
+const getIDLAddress = async () => {
+
+    const programId = new PublicKey('SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf');
+    const [base] = PublicKey.findProgramAddressSync([], programId);
+    const idlAddress = await PublicKey.createWithSeed(base, "anchor:idl", programId);
+
+    console.log('IDL Address:', idlAddress.toString());
+}
+
+getIDLAddress();
+```

@@ -1,0 +1,13 @@
+---
+title: Get Fee
+description: 
+---
+
+```tsx
+import { createSolanaRpc } from "@solana/kit";
+
+const rpc = createSolanaRpc("https://api.mainnet-beta.solana.com");
+
+const fee = await rpc.getFeeForMessage('test').send();
+console.log("fee: ", fee);
+```

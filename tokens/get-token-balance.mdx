@@ -1,0 +1,38 @@
+---
+title: Get Token Balance
+description: Get the balance of a Solana SPL token
+---
+
+# New Way
+
+```tsx
+import { address, createSolanaRpc } from "@solana/kit";
+
+const rpc = createSolanaRpc('https://api.devnet.solana.com');
+
+const TOKEN_ACCOUNT = address('5KAvdxbUM48qqytGtrzLumDSs4qLUAgg95J7oXHWHXEk');
+
+const getTokenBalance = async () => {
+    const tokenAccountBalance = await rpc.getTokenAccountBalance(TOKEN_ACCOUNT).send()
+    console.log(tokenAccountBalance);
+};
+
+getTokenBalance();
+```
+
+# Old Way
+
+```tsx
+import { Connection, PublicKey } from "@solana/kit";
+
+const connection = new Connection("https://api.devnet.solana.com");
+
+const tokenAccount = new PublicKey("37sAdhEFiYxKnQAm7CPd5GLK1ZxWovqn3p87kKjfD44c");
+
+const getTokenBalance = async () => {
+    const tokenAccountBalance = await connection.getTokenAccountBalance(tokenAccount);
+    console.log(tokenAccountBalance);
+};
+
+getTokenBalance();
+```

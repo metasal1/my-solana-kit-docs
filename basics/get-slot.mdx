@@ -1,0 +1,12 @@
+---
+title: Get Slot
+description: 
+---
+
+```js
+import { createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+const slot = await rpc.getSlot().send();
+console.log(slot);
+```

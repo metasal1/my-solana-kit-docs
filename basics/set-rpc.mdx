@@ -1,0 +1,22 @@
+---
+title: Set RPC
+description: Create a connection to an RPC
+---
+
+# New Way
+
+```tsx 
+import { createSolanaRpc } from "@solana/kit";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+```
+
+# Old Way
+
+```tsx
+import { clusterApiUrl, Connection } from "@solana/kit";
+ 
+const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+```
+
+You can find RPC providers here (https://solana.com/rpc)[https://solana.com/rpc]

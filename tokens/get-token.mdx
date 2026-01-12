@@ -1,0 +1,41 @@
+---
+title: Get Token
+description: Fetch a token including it's mint auth, supply, decimals and freeze authority
+---
+
+```tsx
+import { fetchMint } from "@solana-program/token";
+import { address, createSolanaRpc, mainnet } from "@solana/kit";
+
+const rpc = createSolanaRpc(mainnet("https://api.mainnet-beta.solana.com"));
+
+const fetchToken = async () => {
+
+    const mint = await fetchMint(
+        rpc,
+        address("ErbakSHZWeLnq1hsqFvNz8FvxSzggrfyNGB6TEGSSgNE")
+    );
+
+    console.log(mint);
+};
+
+fetchToken();
+```
+
+## Example response
+```json 
+{
+  executable: false,
+  lamports: 1461600n,
+  programAddress: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  address: 'ErbakSHZWeLnq1hsqFvNz8FvxSzggrfyNGB6TEGSSgNE',
+  data: {
+    mintAuthority: { __option: 'None' },
+    supply: 99541864217564074n,
+    decimals: 5,
+    isInitialized: true,
+    freezeAuthority: { __option: 'None' }
+  },
+  exists: true
+}
+```

@@ -1,0 +1,247 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "My Solana Kit",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#9945FF",
+    "light": "#14F195",
+    "dark": "#9945FF"
+  },
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/anza-xyz/kit"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "/introduction"
+  },
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/metasal1/solana-web3-v2-demo"
+    }
+  ],
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              {
+                "group": "Installation",
+                "pages": [
+                  "installation/node",
+                  "installation/rust",
+                  "installation/cli",
+                  "installation/anchor"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Basics",
+            "pages": [
+              "basics/index",
+              "basics/create-keypair",
+              "basics/load-keypair",
+              "basics/set-rpc",
+              "basics/get-balance",
+              "basics/transfer-sol",
+              "basics/request-airdrop",
+              "basics/get-blockhash",
+              "basics/get-signature",
+              "basics/get-health",
+              "basics/get-fee",
+              "basics/get-rent",
+              "basics/get-slot",
+              "basics/get-transaction"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/index",
+              "advanced/update-blockhash",
+              "advanced/base58-to-base64",
+              "advanced/base64-to-base58",
+              "advanced/deserialize-transactions"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Tokens",
+        "groups": [
+          {
+            "group": "SPL Tokens",
+            "pages": [
+              "tokens/index",
+              "tokens/create-token",
+              "tokens/create-token-account",
+              "tokens/mint-tokens",
+              "tokens/transfer-token",
+              "tokens/burn-token",
+              "tokens/close-account",
+              "tokens/get-token",
+              "tokens/get-token-account",
+              "tokens/get-token-balance",
+              "tokens/create-metadata",
+              "tokens/get-metadata"
+            ]
+          },
+          {
+            "group": "Token Extensions",
+            "pages": [
+              "token-extensions/index",
+              "token-extensions/metadata",
+              "token-extensions/metadata-pointer",
+              "token-extensions/transfer-fees",
+              "token-extensions/confidential-transfers"
+            ]
+          },
+          {
+            "group": "CLI Commands",
+            "pages": [
+              "cli/index",
+              "cli/create-token",
+              "cli/create-account",
+              "cli/mint-tokens",
+              "cli/burn-tokens",
+              "cli/close-account",
+              "cli/get-supply",
+              "cli/display-information",
+              "cli/disable-mint",
+              "cli/disable-freeze"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Features",
+        "groups": [
+          {
+            "group": "Programs",
+            "pages": [
+              "programs/index",
+              "programs/get-programs",
+              "programs/get-program-info",
+              "programs/get-idl-address"
+            ]
+          },
+          {
+            "group": "Staking",
+            "pages": [
+              "stake/index",
+              "stake/create-stake-account",
+              "stake/delegate-stake",
+              "stake/activate-stake",
+              "stake/deactivate-stake",
+              "stake/withdraw-stake",
+              "stake/merge-stake",
+              "stake/list-stake"
+            ]
+          },
+          {
+            "group": "Domains",
+            "pages": [
+              "domains/index",
+              "domains/create-domain",
+              "domains/transfer-domain",
+              "domains/create-subdomain",
+              "domains/transfer-subdomain",
+              "domains/create-transfer-domain",
+              "domains/create-transfer-subdomain"
+            ]
+          },
+          {
+            "group": "Lookup Tables",
+            "pages": [
+              "tables/index",
+              "tables/create",
+              "tables/get",
+              "tables/use",
+              "tables/extend"
+            ]
+          },
+          {
+            "group": "Compressed Tokens",
+            "pages": [
+              "compressed/index",
+              "compressed/installation",
+              "compressed/register",
+              "compressed/airdrop",
+              "compressed/transfer",
+              "compressed/list",
+              "compressed/decompress"
+            ]
+          },
+          {
+            "group": "Nonce Accounts",
+            "pages": [
+              "nonce/use-nonce-account"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Course",
+        "groups": [
+          {
+            "group": "Solana Kit Course",
+            "pages": [
+              "course/index",
+              "course/introduction",
+              "course/project-01",
+              "course/project-02",
+              "course/project-03",
+              "course/project-04",
+              "course/project-05",
+              "course/project-06",
+              "course/project-07",
+              "course/project-08",
+              "course/project-09",
+              "course/project-10",
+              "course/project-11",
+              "course/project-12",
+              "course/project-13"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Packages",
+            "pages": [
+              "packages/index",
+              "packages/errors"
+            ]
+          },
+          {
+            "group": "Privacy",
+            "pages": [
+              "privacy/index",
+              "privacy/privacy-cash"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footerSocials": {
+    "github": "https://github.com/metasal1",
+    "twitter": "https://twitter.com/metasal"
+  }
+}

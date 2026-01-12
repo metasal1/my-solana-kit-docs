@@ -1,0 +1,65 @@
+---
+title: Create Stake Account
+description: Create account for staking
+---
+
+# New Way
+
+```tsx
+
+```
+
+# Old Way
+
+```tsx
+import {
+    clusterApiUrl,
+    Connection,
+    Keypair,
+    LAMPORTS_PER_SOL,
+    StakeProgram,
+    Authorized,
+    sendAndConfirmTransaction,
+    Lockup,
+} from "@solana/kit";
+import walletSecret from '../wallet.json'
+import { getStakeActivation } from '@anza-xyz/solana-rpc-get-stake-activation';
+
+(async () => {
+    const wallet = Keypair.fromSecretKey(new Uint8Array(walletSecret));
+    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+
+    const stakeAccount = Keypair.generate();
+
+    const minimumRent = await connection.getMinimumBalanceForRentExemption(
+        StakeProgram.space
+    );
+    const amountUserWantsToStake = 1000;
+    const amountToStake = minimumRent + amountUserWantsToStake;
+
+    const createStakeAccountTx = StakeProgram.createAccount({
+        authorized: new Authorized(wallet.publicKey, wallet.publicKey),
+        fromPubkey: wallet.publicKey,
+        lamports: amountToStake,
+        lockup: new Lockup(0, 0, wallet.publicKey),
+        stakePubkey: stakeAccount.publicKey,
+    });
+
+    const createStakeAccountTxId = await sendAndConfirmTransaction(
+        connection,
+        createStakeAccountTx,
+        [
+            wallet,
+            stakeAccount
+        ]
+    );
+    console.log(`Stake account created. Tx Id:`, createStakeAccountTxId);
+
+    let stakeBalance = await connection.getBalance(stakeAccount.publicKey);
+    console.log(`Stake account balance:`, stakeBalance);
+
+    let status = await getStakeActivation(connection, stakeAccount.publicKey);
+    console.log(status);
+})();
+
+```

@@ -1,0 +1,62 @@
+---
+title: Get Program Info
+description: Get information about a specific Solana program
+---
+
+## New Way
+```tsx
+import { address, createSolanaRpc } from "@solana/kit";
+
+const rpc = createSolanaRpc('http://localhost:8899');
+
+const PROGRAM_ID = 'Qi4ioHyQKMx7LMFxDAtVz9BJAaofvSFZWSkixBwyWDD';
+
+const getProgramInfo = async () => {
+
+    const programInfo = await rpc.getAccountInfo(address(PROGRAM_ID)).send()
+    console.log(programInfo);
+};
+
+getProgramInfo();
+```
+## Old Way
+```tsx
+import { Connection, PublicKey } from '@solana/kit';
+
+const PROGRAM_ID = 'Qi4ioHyQKMx7LMFxDAtVz9BJAaofvSFZWSkixBwyWDD';
+
+const getProgramInfo = async () => {
+    const connection = new Connection(`http://localhost:8899`, 'confirmed');
+
+    try {
+
+        const publicKey = new PublicKey(PROGRAM_ID);
+
+        const programInfo = await connection.getAccountInfo(publicKey);
+
+        console.log(programInfo);
+
+    } catch (error) {
+        console.error('Error fetching program info:', error.message);
+    }
+};
+
+getProgramInfo();
+```
+
+
+## Example Response
+
+```json
+{
+  context: { apiVersion: '2.0.21', slot: 40415n },
+  value: {
+    data: 't64jUHpmmvtDWHWLvfj6SPkyucCBStmKtjmEtgvgpFSE98PG',
+    executable: true,
+    lamports: 1141440n,
+    owner: 'BPFLoaderUpgradeab1e11111111111111111111111',
+    rentEpoch: 18446744073709551615n,
+    space: 36n
+  }
+}
+```

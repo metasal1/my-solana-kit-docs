@@ -1,0 +1,59 @@
+---
+title: Get ALT
+description: Get / fetch the Address Lookup Table
+---
+
+# New Way
+
+> Note - remember to install @solana-program/address-lookup-table
+
+```tsx
+import {
+    AddressesByLookupTableAddress,
+    createSolanaRpc,
+    Address,
+    address
+} from "@solana/kit";
+import { fetchAddressLookupTable } from "@solana-program/address-lookup-table";
+
+export async function getAlt(rpc: any, alt: Address) {
+    const altAccount = await fetchAddressLookupTable(rpc, alt);
+
+    const addressesByLookupTableAddress: AddressesByLookupTableAddress = {};
+    addressesByLookupTableAddress[alt] = altAccount.data.addresses;
+
+    return addressesByLookupTableAddress;
+}
+
+const main = async () => {
+    const rpc = createSolanaRpc('https://api.devnet.solana.com');
+
+    const result = await getAlt(rpc, address('24uisJYVAt3NhdeyAVJA1y5MERAia42LTTLiRGtrQNmw'))
+    console.log("Success:", result);
+}
+main();
+
+
+```
+
+# Old Way
+
+```tsx
+// define the `PublicKey` of the lookup table to fetch
+const lookupTableAddress = new web3.PublicKey("");
+ 
+// get the table from the cluster
+const lookupTableAccount = (
+  await connection.getAddressLookupTable(lookupTableAddress)
+).value;
+ 
+// `lookupTableAccount` will now be a `AddressLookupTableAccount` object
+ 
+console.log("Table address from cluster:", lookupTableAccount.key.toBase58());
+
+// loop through and parse all the addresses stored in the table
+for (let i = 0; i < lookupTableAccount.state.addresses.length; i++) {
+  const address = lookupTableAccount.state.addresses[i];
+  console.log(i, address.toBase58());
+}
+```
