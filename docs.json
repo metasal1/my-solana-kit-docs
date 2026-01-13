@@ -236,6 +236,13 @@
             "group": "Privacy",
             "pages": [
               "privacy/index",
+              "privacy/aztec",
+              "privacy/circum",
+              "privacy/dark",
+              "privacy/encrypt-trade",
+              "privacy/hush",
+              "privacy/inco",
+              "privacy/light-protocol",
               {
                 "group": "Privacy Cash",
                 "pages": [
@@ -247,7 +254,9 @@
                   "privacy/privacy-cash/withdraw-spl",
                   "privacy/privacy-cash/balance"
                 ]
-              }
+              },
+              "privacy/range",
+              "privacy/reclaim"
             ]
           }
         ]
