@@ -1,5 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "seo": {
+    "indexHiddenPages": false
+  },
   "theme": "mint",
   "name": "My Solana Kit",
   "logo": {
