@@ -1,0 +1,57 @@
+---
+title: Withdraw SPL
+description: Withdraw USDC or USDT privately from Privacy Cash
+---
+
+## Withdraw SPL Tokens
+
+Withdraw USDC or USDT privately from the Privacy Cash pool using zero-knowledge proofs.
+
+### Example
+
+```typescript
+import { PublicKey } from '@solana/web3.js';
+import { PrivacyCash } from 'privacycash';
+
+const client = new PrivacyCash({
+    RPC_url: 'YOUR_SOLANA_MAINNET_RPC_URL',
+    owner: 'YOUR_PRIVATE_KEY'
+});
+
+// USDC mint address
+const mintAddress = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+
+async function withdrawUsdc() {
+    const recipientAddress = 'RECIPIENT_ADDRESS';
+
+    // Check balance first
+    const privateBalance = await client.getPrivateBalanceSpl(mintAddress);
+    console.log('USDC balance:', privateBalance.amount);
+
+    // Withdraw 2 USDC
+    const withdrawRes = await client.withdrawSPL({
+        mintAddress,
+        amount: 2,
+        recipientAddress
+    });
+    console.log(withdrawRes);
+
+    // Check balance after withdrawal
+    const balanceAfter = await client.getPrivateBalanceSpl(mintAddress);
+    console.log('USDC balance after withdraw:', balanceAfter.amount);
+}
+
+withdrawUsdc();
+```
+
+### SPL APIs
+
+| Method | Description |
+|----------|-------------|
+| `client.depositSPL()` | Deposit USDC/USDT |
+| `client.withdrawSPL()` | Withdraw USDC/USDT |
+| `client.getPrivateBalanceSpl()` | Check SPL balance |
+
+### Fees
+
+Same as SOL withdrawals: 0.35% + 0.006 SOL equivalent per withdrawal.

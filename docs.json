@@ -236,7 +236,18 @@
             "group": "Privacy",
             "pages": [
               "privacy/index",
-              "privacy/privacy-cash"
+              {
+                "group": "Privacy Cash",
+                "pages": [
+                  "privacy/privacy-cash",
+                  "privacy/privacy-cash/installation",
+                  "privacy/privacy-cash/deposit",
+                  "privacy/privacy-cash/deposit-spl",
+                  "privacy/privacy-cash/withdraw",
+                  "privacy/privacy-cash/withdraw-spl",
+                  "privacy/privacy-cash/balance"
+                ]
+              }
             ]
           }
         ]
