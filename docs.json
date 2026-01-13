@@ -244,7 +244,12 @@
     ]
   },
   "footerSocials": {
+    "x": "https://x.com/metasal",
     "github": "https://github.com/metasal1",
-    "twitter": "https://twitter.com/metasal"
+    "youtube": "https://youtube.com/@metasal",
+    "linkedin": "https://linkedin.com/in/salsamani",
+    "discord": "https://discord.com/users/702642579090440265",
+    "telegram": "https://t.me/metasal",
+    "website": "https://metasal.xyz"
   }
 }
