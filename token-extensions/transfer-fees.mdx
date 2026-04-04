@@ -1,6 +1,118 @@
 ---
 title: Transfer Fees
-description: Charge a tax for transfering tokens
+description: Charge a fee on every token transfer using the Transfer Fee extension
 ---
 
-Coming Soon!
+> Requires a funded devnet wallet. Examples verified on Solana devnet.
+
+## New Way
+
+```tsx
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  createKeyPairSignerFromBytes,
+  generateKeyPairSigner,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstructions,
+  signTransactionMessageWithSigners,
+  getSignatureFromTransaction,
+  sendAndConfirmTransactionFactory,
+  lamports,
+} from "@solana/kit";
+import {
+  TOKEN_2022_PROGRAM_ADDRESS,
+  getInitializeMintInstruction,
+  getInitializeTransferFeeConfigInstruction,
+  getMintSize,
+  extension,
+} from "@solana-program/token-2022";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+const createTokenWithTransferFee = async () => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+  const mintSigner = await generateKeyPairSigner();
+
+  // 100 basis points = 1% fee, max fee of 1_000_000 tokens
+  const feeBasisPoints = 100;
+  const maxFee = BigInt(1_000_000);
+
+  const transferFeeExtension = extension("TransferFeeConfig", {
+    transferFeeConfigAuthority: payer.address,
+    withdrawWithheldAuthority: payer.address,
+    withheldAmount: 0n,
+    olderTransferFee: {
+      epoch: 0n,
+      maximumFee: maxFee,
+      transferFeeBasisPoints: feeBasisPoints,
+    },
+    newerTransferFee: {
+      epoch: 0n,
+      maximumFee: maxFee,
+      transferFeeBasisPoints: feeBasisPoints,
+    },
+  });
+
+  const mintSize = getMintSize([transferFeeExtension]);
+  const rentLamports = await rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send();
+
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) =>
+      appendTransactionMessageInstructions(
+        [
+          getCreateAccountInstruction({
+            payer,
+            newAccount: mintSigner,
+            lamports: lamports(rentLamports),
+            space: mintSize,
+            programAddress: TOKEN_2022_PROGRAM_ADDRESS,
+          }),
+          getInitializeTransferFeeConfigInstruction({
+            mint: mintSigner.address,
+            transferFeeConfigAuthority: payer.address,
+            withdrawWithheldAuthority: payer.address,
+            transferFeeBasisPoints: feeBasisPoints,
+            maximumFee: maxFee,
+          }),
+          getInitializeMintInstruction({
+            mint: mintSigner.address,
+            decimals: 6,
+            mintAuthority: payer.address,
+          }),
+        ],
+        tx
+      ),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log("Mint with transfer fee:", mintSigner.address);
+  console.log("Fee: 1% (100 bps), max fee:", maxFee.toString());
+  console.log("Signature:", signature);
+};
+
+createTokenWithTransferFee();
+```
+
+## CLI
+
+```bash
+# Create a Token-2022 mint with 1% transfer fee (100 basis points)
+spl-token --program-2022 create-token \
+  --transfer-fee 100 1000000
+```

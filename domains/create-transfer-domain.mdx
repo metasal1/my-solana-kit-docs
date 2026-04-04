@@ -1,8 +1,103 @@
 ---
-title: Domains
-description: Scripts to create, transfer Solana / Bonfida Domains and Subdomains
+title: Create and Transfer Domain
+description: Register a .sol domain and immediately transfer it to a new owner in one flow
 ---
 
-```tsx
+> Requires a funded devnet wallet. Examples target devnet.
 
+## New Way
+
+```tsx
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  createKeyPairSignerFromBytes,
+  address,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstructions,
+  signTransactionMessageWithSigners,
+  getSignatureFromTransaction,
+  sendAndConfirmTransactionFactory,
+} from "@solana/kit";
+import {
+  registerDomainNameV2,
+  getNameAccountKey,
+  getTransferInstruction,
+  ROOT_DOMAIN_ACCOUNT,
+} from "@bonfida/spl-name-service";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+const DOMAIN = "mynewdomain"; // without .sol suffix
+const SPACE = 1_000;
+const NEW_OWNER = address("NewOwnerPublicKeyHere11111111111111111111111");
+
+const createAndTransferDomain = async () => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+
+  // Get registration instructions
+  const registerIxs = await registerDomainNameV2(
+    rpc as any,
+    DOMAIN,
+    SPACE,
+    payer.address as any,
+  );
+
+  const domainKey = await getNameAccountKey(DOMAIN, undefined, ROOT_DOMAIN_ACCOUNT);
+
+  // Add transfer instruction right after registration
+  const transferIx = getTransferInstruction({
+    nameAccount: domainKey,
+    newOwner: NEW_OWNER,
+    currentOwner: payer,
+  });
+
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstructions([...registerIxs, transferIx], tx),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log(`Registered and transferred: ${DOMAIN}.sol`);
+  console.log("New owner:", NEW_OWNER);
+  console.log("Signature:", signature);
+};
+
+createAndTransferDomain();
+```
+
+## Old Way
+
+```tsx
+import { Connection, Keypair, Transaction, sendAndConfirmTransaction, PublicKey } from "@solana/web3.js";
+import {
+  registerDomainNameV2,
+  transferNameOwnership,
+} from "@bonfida/spl-name-service";
+import wallet from "./wallet.json";
+
+const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+const keypair = Keypair.fromSecretKey(new Uint8Array(wallet));
+const DOMAIN = "mynewdomain";
+const NEW_OWNER = new PublicKey("NewOwnerPublicKeyHere11111111111111111111111");
+
+const registerIxs = await registerDomainNameV2(connection, DOMAIN, 1000, keypair.publicKey);
+const transferIx = await transferNameOwnership(connection, DOMAIN, NEW_OWNER);
+
+const tx = new Transaction().add(...registerIxs, transferIx);
+await sendAndConfirmTransaction(connection, tx, [keypair]);
+console.log(`Registered and transferred: ${DOMAIN}.sol to ${NEW_OWNER.toBase58()}`);
 ```

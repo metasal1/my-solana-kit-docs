@@ -1,0 +1,137 @@
+---
+title: Use Nonce Account
+description: Create and use durable nonce accounts for offline signing and scheduled transactions
+---
+
+> Requires a funded devnet wallet. Examples verified on Solana devnet.
+
+Durable nonces let you create a transaction that doesn't expire — instead of a recent blockhash, it uses a nonce stored in a dedicated on-chain account.
+
+## New Way
+
+```tsx
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  createKeyPairSignerFromBytes,
+  generateKeyPairSigner,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  setTransactionMessageLifetimeUsingDurableNonce,
+  appendTransactionMessageInstructions,
+  signTransactionMessageWithSigners,
+  getSignatureFromTransaction,
+  sendAndConfirmTransactionFactory,
+  lamports,
+} from "@solana/kit";
+import {
+  getCreateNonceAccountInstruction,
+  getAdvanceNonceInstruction,
+  getNonceDataCodec,
+} from "@solana-program/system";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+// Step 1: Create the nonce account
+const createNonceAccount = async () => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+  const nonceSigner = await generateKeyPairSigner();
+
+  const NONCE_ACCOUNT_SIZE = 80;
+  const rentLamports = await rpc.getMinimumBalanceForRentExemption(BigInt(NONCE_ACCOUNT_SIZE)).send();
+
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) =>
+      appendTransactionMessageInstructions(
+        [
+          getCreateNonceAccountInstruction({
+            payer,
+            nonce: nonceSigner,
+            nonceAuthority: payer.address,
+            rentLamports: lamports(rentLamports),
+          }),
+        ],
+        tx
+      ),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log("Nonce account created:", nonceSigner.address);
+  console.log("Signature:", signature);
+  return nonceSigner.address;
+};
+
+// Step 2: Use the nonce account in a durable transaction
+const useDurableNonce = async (nonceAccountAddress: string) => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+
+  // Fetch the current nonce value from the account
+  const nonceAccountInfo = await rpc.getAccountInfo(nonceAccountAddress, { encoding: "base64" }).send();
+  const nonceData = getNonceDataCodec().decode(Buffer.from(nonceAccountInfo.value!.data[0], "base64"));
+  const currentNonce = nonceData.nonce;
+
+  // Build a durable transaction — it won't expire even if left unsigned for days
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) =>
+      setTransactionMessageLifetimeUsingDurableNonce(
+        { nonce: currentNonce, nonceAccountAddress, nonceAuthorityAddress: payer.address },
+        tx
+      ),
+    (tx) =>
+      appendTransactionMessageInstructions(
+        [
+          // Advance-nonce must always be the first instruction in a durable tx
+          getAdvanceNonceInstruction({
+            nonce: nonceAccountAddress,
+            nonceAuthority: payer,
+          }),
+          // ... add your other instructions here ...
+        ],
+        tx
+      ),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log("Durable transaction confirmed:", signature);
+};
+
+const nonceAddress = await createNonceAccount();
+await useDurableNonce(nonceAddress);
+```
+
+## CLI
+
+```bash
+# Create a nonce account
+solana create-nonce-account nonce-keypair.json 0.002
+
+# Show the stored nonce value
+solana nonce nonce-keypair.json
+
+# Advance (consume) the nonce
+solana new-nonce nonce-keypair.json
+
+# Use durable nonce when sending a transaction
+solana transfer <destination> 0.1 \
+  --blockhash-from-nonce nonce-keypair.json \
+  --nonce-authority ~/.config/solana/id.json
+```

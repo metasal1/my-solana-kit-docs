@@ -1,6 +1,126 @@
 ---
 title: Metadata
-description:
+description: Embed on-chain metadata directly into a Token-2022 mint using the Metadata Extension
 ---
 
-Coming Soon!
+> Requires a funded devnet wallet. Examples verified on Solana devnet.
+
+## New Way
+
+```tsx
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  createKeyPairSignerFromBytes,
+  generateKeyPairSigner,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstructions,
+  signTransactionMessageWithSigners,
+  getSignatureFromTransaction,
+  sendAndConfirmTransactionFactory,
+  lamports,
+} from "@solana/kit";
+import {
+  TOKEN_2022_PROGRAM_ADDRESS,
+  getInitializeMintInstruction,
+  getInitializeMetadataPointerInstruction,
+  getMintSize,
+  extension,
+} from "@solana-program/token-2022";
+import {
+  getInitializeInstruction as getInitializeMetadataInstruction,
+  getUpdateFieldInstruction,
+} from "@solana-program/token-metadata";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+const createTokenWithMetadata = async () => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+  const mintSigner = await generateKeyPairSigner();
+
+  const metadataExtension = extension("TokenMetadata", {
+    updateAuthority: payer.address,
+    mint: mintSigner.address,
+    name: "My Token",
+    symbol: "MTK",
+    uri: "https://example.com/token-metadata.json",
+    additionalMetadata: [],
+  });
+
+  const metadataPointerExtension = extension("MetadataPointer", {
+    authority: payer.address,
+    metadataAddress: mintSigner.address,
+  });
+
+  const mintSize = getMintSize([metadataPointerExtension, metadataExtension]);
+  const rentLamports = await rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send();
+
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) =>
+      appendTransactionMessageInstructions(
+        [
+          getCreateAccountInstruction({
+            payer,
+            newAccount: mintSigner,
+            lamports: lamports(rentLamports),
+            space: mintSize,
+            programAddress: TOKEN_2022_PROGRAM_ADDRESS,
+          }),
+          getInitializeMetadataPointerInstruction({
+            mint: mintSigner.address,
+            authority: payer.address,
+            metadataAddress: mintSigner.address,
+          }),
+          getInitializeMintInstruction({
+            mint: mintSigner.address,
+            decimals: 9,
+            mintAuthority: payer.address,
+          }),
+          getInitializeMetadataInstruction({
+            metadata: mintSigner.address,
+            updateAuthority: payer.address,
+            mint: mintSigner.address,
+            mintAuthority: payer,
+            name: "My Token",
+            symbol: "MTK",
+            uri: "https://example.com/token-metadata.json",
+            programId: TOKEN_2022_PROGRAM_ADDRESS,
+          }),
+        ],
+        tx
+      ),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log("Mint with metadata:", mintSigner.address);
+  console.log("Signature:", signature);
+};
+
+createTokenWithMetadata();
+```
+
+## CLI
+
+```bash
+# Create a Token-2022 mint with metadata extension
+spl-token --program-2022 create-token \
+  --name "My Token" \
+  --symbol "MTK" \
+  --uri "https://example.com/token-metadata.json" \
+  --enable-metadata
+```

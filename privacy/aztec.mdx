@@ -1,8 +1,54 @@
 ---
 title: Aztec
-description: Privacy-first zkRollup on Ethereum
+description: Privacy-first zkRollup on Ethereum with native private smart contracts
 ---
 
-# Aztec
+Aztec is a zkRollup on Ethereum that enables **fully private smart contracts** using its own ZK language, [Noir](https://noir-lang.org). It is not a Solana-native protocol — it runs on Ethereum L2.
 
-Coming soon.
+## Installation
+
+```bash
+npm install @aztec/aztec.js @aztec/accounts
+```
+
+## Basic Usage
+
+```ts
+import { createPXEClient, waitForPXE } from "@aztec/aztec.js";
+import { getSchnorrAccount } from "@aztec/accounts/schnorr";
+import { Fr, GrumpkinScalar } from "@aztec/aztec.js";
+
+const PXE_URL = "http://localhost:8080"; // local Aztec sandbox
+
+const main = async () => {
+  const pxe = createPXEClient(PXE_URL);
+  await waitForPXE(pxe);
+
+  const nodeInfo = await pxe.getNodeInfo();
+  console.log("Connected to Aztec node:", nodeInfo.l1ChainId);
+
+  // Create a new private account
+  const secretKey = Fr.random();
+  const signingKey = GrumpkinScalar.random();
+  const wallet = await getSchnorrAccount(pxe, secretKey, signingKey).waitSetup();
+
+  console.log("Private wallet address:", wallet.getAddress().toString());
+};
+
+main();
+```
+
+## Local Sandbox
+
+```bash
+# Run local Aztec sandbox (requires Docker)
+npx @aztec/cli sandbox
+```
+
+> **Note:** Aztec runs on Ethereum, not Solana. For Solana-native privacy, see [Light Protocol](/privacy/light-protocol), [Hush](/privacy/hush), or [Confidential Transfers](/token-extensions/confidential-transfers).
+
+## Links
+
+- [Aztec Docs](https://docs.aztec.network)
+- [Noir Language](https://noir-lang.org)
+- [GitHub](https://github.com/AztecProtocol/aztec-packages)

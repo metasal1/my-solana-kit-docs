@@ -1,6 +1,107 @@
 ---
 title: Metadata Pointer
-description: 
+description: Point a Token-2022 mint to an external or embedded metadata account
 ---
 
-Coming Soon!
+> Requires a funded devnet wallet. Examples verified on Solana devnet.
+
+## New Way
+
+```tsx
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  createKeyPairSignerFromBytes,
+  generateKeyPairSigner,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstructions,
+  signTransactionMessageWithSigners,
+  getSignatureFromTransaction,
+  sendAndConfirmTransactionFactory,
+  lamports,
+  address,
+} from "@solana/kit";
+import {
+  TOKEN_2022_PROGRAM_ADDRESS,
+  getInitializeMintInstruction,
+  getInitializeMetadataPointerInstruction,
+  getMintSize,
+  extension,
+} from "@solana-program/token-2022";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+const createMintWithMetadataPointer = async () => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+  const mintSigner = await generateKeyPairSigner();
+
+  // Point to the mint itself (self-referential) for embedded metadata,
+  // or set metadataAddress to any external metadata account address.
+  const metadataPointerExtension = extension("MetadataPointer", {
+    authority: payer.address,
+    metadataAddress: mintSigner.address, // embedded — same as mint
+  });
+
+  const mintSize = getMintSize([metadataPointerExtension]);
+  const rentLamports = await rpc.getMinimumBalanceForRentExemption(BigInt(mintSize)).send();
+
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) =>
+      appendTransactionMessageInstructions(
+        [
+          getCreateAccountInstruction({
+            payer,
+            newAccount: mintSigner,
+            lamports: lamports(rentLamports),
+            space: mintSize,
+            programAddress: TOKEN_2022_PROGRAM_ADDRESS,
+          }),
+          getInitializeMetadataPointerInstruction({
+            mint: mintSigner.address,
+            authority: payer.address,
+            metadataAddress: mintSigner.address,
+          }),
+          getInitializeMintInstruction({
+            mint: mintSigner.address,
+            decimals: 9,
+            mintAuthority: payer.address,
+          }),
+        ],
+        tx
+      ),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log("Mint with metadata pointer:", mintSigner.address);
+  console.log("Metadata address:", mintSigner.address, "(self-referential)");
+  console.log("Signature:", signature);
+};
+
+createMintWithMetadataPointer();
+```
+
+## CLI
+
+```bash
+# Metadata pointer is automatically set when using --enable-metadata
+spl-token --program-2022 create-token --enable-metadata
+
+# Or set the metadata pointer to an external account
+spl-token --program-2022 create-token \
+  --metadata-address <metadata_account_pubkey>
+```

@@ -1,8 +1,31 @@
 ---
 title: Get Token Supply
-description: 
+description: Get the total supply of an SPL token
 ---
 
+Get token supply via CLI
+
 ```bash
-spl-token supply {token_address}
+spl-token supply <token_address>
+```
+
+Example
+
+```bash
+spl-token supply EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+Get supply via RPC
+
+```tsx
+import { createSolanaRpc, address } from "@solana/kit";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+
+const TOKEN_MINT = address("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+
+const supply = await rpc.getTokenSupply(TOKEN_MINT).send();
+console.log("Total supply:", supply.value.uiAmountString);
+console.log("Raw amount:", supply.value.amount);
+console.log("Decimals:", supply.value.decimals);
 ```

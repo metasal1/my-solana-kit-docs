@@ -1,8 +1,86 @@
 ---
 title: Inco
-description: Confidential computing network
+description: Fully Homomorphic Encryption (FHE) confidential computing for Solana
 ---
 
-# Inco
+[Inco](https://inco.org) is a **confidential computing network** powered by Fully Homomorphic Encryption (FHE). It provides a universal confidentiality layer for both EVM chains and Solana, enabling computations on encrypted data without ever decrypting it.
 
-Coming soon.
+> Inco's Solana SDK is in beta on devnet as of early 2026.
+
+## Installation
+
+```bash
+# For Solana (SVM)
+npm install @inco/solana-sdk
+
+# For EVM chains
+npm install @inco/js
+```
+
+## Solana Usage
+
+```ts
+import { IncoSolanaClient } from "@inco/solana-sdk";
+import { createSolanaRpc, createKeyPairSignerFromBytes, address } from "@solana/kit";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const signer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+
+// Initialize Inco client (connects to Inco's TEE network)
+const inco = new IncoSolanaClient({
+  network: "devnet",
+  signer,
+});
+
+// Encrypt a value before storing it on-chain
+const secretBalance = 1_000_000n; // this value stays encrypted
+const encryptedValue = await inco.encrypt(secretBalance);
+console.log("Encrypted value (safe to store on-chain):", encryptedValue);
+
+// Submit encrypted data to your Solana program
+// Your program handles encrypted state — Inco TEE decrypts only for authorized callers
+const txSignature = await inco.submitEncrypted({
+  program: address("YourProgramAddressHere11111111111111111111111"),
+  encryptedData: encryptedValue,
+});
+console.log("Tx:", txSignature);
+
+// Request attested decryption (only authorized party receives plaintext)
+const decrypted = await inco.decrypt({
+  ciphertext: encryptedValue,
+  authorizedAddress: signer.address,
+});
+console.log("Decrypted:", decrypted);
+```
+
+## EVM Usage
+
+```ts
+import { Lightning } from "@inco/js";
+import { createWalletClient, http } from "viem";
+import { baseSepolia } from "viem/chains";
+
+const chain = Lightning.latest("base-sepolia");
+
+// Encrypt a value on EVM
+const encryptedValue = await chain.encrypt(42n, recipientAddress);
+
+// Pass to your confidential Solidity contract
+// contract can compute on encrypted data without revealing it
+```
+
+## How FHE Works
+
+- Values are encrypted **client-side** before hitting the chain
+- Smart contracts operate on **ciphertexts** — no decryption during computation
+- Only authorized parties request **attested decryption** from Inco's TEE
+- The plaintext never appears on-chain
+
+## Links
+
+- [Docs](https://docs.inco.org)
+- [Solana SDK Docs](https://docs.inco.org/svm/home)
+- [npm: @inco/solana-sdk](https://www.npmjs.com/package/@inco/solana-sdk)
+- [npm: @inco/js](https://www.npmjs.com/package/@inco/js)
+- [GitHub](https://github.com/inco-org)
