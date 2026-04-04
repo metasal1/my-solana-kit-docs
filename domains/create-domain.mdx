@@ -1,8 +1,86 @@
 ---
-title: Domains
-description: Scripts to create, transfer Solana / Bonfida Domains and Subdomains
+title: Create Domain
+description: Register a .sol domain on Solana via Bonfida Name Service
 ---
 
-```tsx
+> Requires a funded devnet wallet. Examples target devnet.
 
+## New Way
+
+```tsx
+import {
+  createSolanaRpc,
+  createSolanaRpcSubscriptions,
+  createKeyPairSignerFromBytes,
+  createTransactionMessage,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  appendTransactionMessageInstructions,
+  signTransactionMessageWithSigners,
+  getSignatureFromTransaction,
+  sendAndConfirmTransactionFactory,
+} from "@solana/kit";
+import { registerDomainNameV2, getNameAccountKey, ROOT_DOMAIN_ACCOUNT } from "@bonfida/spl-name-service";
+import wallet from "../wallet.json";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
+const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+const DOMAIN = "mynewdomain"; // without .sol suffix
+const SPACE = 1_000; // bytes of storage for the domain record
+
+const registerDomain = async () => {
+  const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+
+  // registerDomainNameV2 returns the instructions needed to register the domain
+  // The referrer can be undefined or a referrer public key for fee sharing
+  const instructions = await registerDomainNameV2(
+    rpc as any,
+    DOMAIN,
+    SPACE,
+    payer.address as any,
+    undefined, // USDC mint (optional — uses default)
+    undefined  // referrer (optional)
+  );
+
+  const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+
+  const transaction = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstructions(instructions, tx),
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+
+  const domainKey = await getNameAccountKey(DOMAIN, undefined, ROOT_DOMAIN_ACCOUNT);
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log(`Registered domain: ${DOMAIN}.sol`);
+  console.log("Domain account:", domainKey.toString());
+  console.log("Signature:", signature);
+};
+
+registerDomain();
+```
+
+## Old Way
+
+```tsx
+import { Connection, Keypair, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { registerDomainNameV2 } from "@bonfida/spl-name-service";
+import wallet from "./wallet.json";
+
+const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+const keypair = Keypair.fromSecretKey(new Uint8Array(wallet));
+const DOMAIN = "mynewdomain";
+const SPACE = 1_000;
+
+const instructions = await registerDomainNameV2(connection, DOMAIN, SPACE, keypair.publicKey);
+const tx = new Transaction().add(...instructions);
+await sendAndConfirmTransaction(connection, tx, [keypair]);
+console.log(`Registered: ${DOMAIN}.sol`);
 ```

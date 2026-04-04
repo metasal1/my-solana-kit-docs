@@ -1,8 +1,74 @@
 ---
-title: Reclaim
-description: Zero-knowledge proofs for web data
+title: Reclaim Protocol
+description: Zero-knowledge proofs for verifiable web data (zkTLS)
 ---
 
-# Reclaim
+[Reclaim Protocol](https://reclaimprotocol.org) generates **zero-knowledge proofs of any HTTPS web session** — proving you own an account, have a balance, or meet criteria on any website, without revealing the raw data.
 
-Coming soon.
+> Not Solana-specific, but commonly used in Solana apps for off-chain attestations and gated access.
+
+## Installation
+
+```bash
+npm install @reclaimprotocol/js-sdk
+```
+
+## Basic Usage
+
+```ts
+import { ReclaimProofRequest } from "@reclaimprotocol/js-sdk";
+
+// Get your App ID + Secret from https://dev.reclaimprotocol.org
+const APP_ID = "your_app_id";
+const APP_SECRET = "your_app_secret";
+
+// Provider ID from Reclaim's catalog (e.g. GitHub username, Twitter followers, etc.)
+const PROVIDER_ID = "6d3f6753-7ee6-49ee-a545-62f1b1822ae5"; // GitHub username
+
+const reclaimProofRequest = await ReclaimProofRequest.init(
+  APP_ID,
+  APP_SECRET,
+  PROVIDER_ID
+);
+
+// Generate a URL the user opens to produce the proof
+const requestUrl = await reclaimProofRequest.getRequestUrl();
+console.log("Open this URL to generate a proof:", requestUrl);
+
+// Poll for the proof (or use a callback URL in production)
+const statusUrl = reclaimProofRequest.getStatusUrl();
+console.log("Status URL:", statusUrl);
+
+await reclaimProofRequest.startSession({
+  onSuccess: (proofs) => {
+    console.log("Proof received:", proofs);
+    // Use proof on-chain or in your app
+  },
+  onFailure: (error) => {
+    console.error("Proof failed:", error);
+  },
+});
+```
+
+## Verify a Proof On-chain (Solana)
+
+```tsx
+import { createSolanaRpc, address } from "@solana/kit";
+import { ReclaimProofRequest, verifyProof } from "@reclaimprotocol/js-sdk";
+
+// Verify locally before submitting to your Solana program
+const isValid = await verifyProof(proof);
+console.log("Proof valid:", isValid);
+
+// Pass the proof data to your Solana program instruction
+// Your on-chain program can verify the proof hash stored in the proof object
+console.log("Proof identifier:", proof.identifier);
+console.log("Claim data:", proof.claimData);
+```
+
+## Links
+
+- [Developer Portal](https://dev.reclaimprotocol.org)
+- [Docs](https://docs.reclaimprotocol.org)
+- [Provider Catalog](https://dev.reclaimprotocol.org/explore)
+- [GitHub](https://github.com/reclaimprotocol/reclaim-js-sdk)

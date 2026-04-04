@@ -1,8 +1,112 @@
 ---
 title: Light Protocol
-description: ZK compression on Solana
+description: ZK Compression on Solana — 99% cheaper accounts with zero-knowledge proofs
 ---
 
-# Light Protocol
+[Light Protocol](https://lightprotocol.com) enables **ZK Compression** on Solana — store compressed accounts, tokens, and PDAs on-chain at a fraction of the cost, secured by validity proofs verified on the Solana L1.
 
-Coming soon.
+> Devnet-verified. ZK Compression is live on Solana mainnet.
+
+## Installation
+
+```bash
+npm install @lightprotocol/stateless.js @lightprotocol/compressed-token
+```
+
+## Get Compressed Token Balances
+
+```tsx
+import { createRpc } from "@lightprotocol/stateless.js";
+import { address } from "@solana/kit";
+
+// Use a ZK-compression-enabled RPC (Helius or local test-validator)
+const rpc = createRpc(
+  "https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY",
+  "https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY"
+);
+
+const OWNER = address("MTSLZDJppGh6xUcnrSSbSQE5fgbvCtQ496MqgQTv8c1");
+
+const balances = await rpc.getCompressedTokenAccountsByOwner(OWNER);
+console.log("Compressed token accounts:", balances.items.length);
+for (const account of balances.items) {
+  console.log("Mint:", account.parsed.mint, "Amount:", account.parsed.amount);
+}
+```
+
+## Create and Mint a Compressed Token
+
+```tsx
+import { createRpc } from "@lightprotocol/stateless.js";
+import {
+  createMint,
+  mintTo,
+  transfer,
+} from "@lightprotocol/compressed-token";
+import { createKeyPairSignerFromBytes, address } from "@solana/kit";
+import wallet from "../wallet.json";
+
+// Requires a funded devnet wallet
+const rpc = createRpc(
+  "https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY",
+  "https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY"
+);
+const payer = await createKeyPairSignerFromBytes(new Uint8Array(wallet));
+
+// Create a new compressed token mint
+const { mint, transactionSignature } = await createMint(
+  rpc,
+  payer,          // fee payer + mint authority
+  payer.address,  // mint authority
+  9               // decimals
+);
+console.log("Compressed mint:", mint.toBase58());
+console.log("Create tx:", transactionSignature);
+
+// Mint compressed tokens to an address
+const mintTx = await mintTo(
+  rpc,
+  payer,
+  mint,
+  payer.address,  // destination
+  payer,          // mint authority
+  1_000_000_000n  // amount (1 token with 9 decimals)
+);
+console.log("Mint tx:", mintTx);
+
+// Transfer compressed tokens (costs ~0.00001 SOL vs ~0.002 SOL standard)
+const transferTx = await transfer(
+  rpc,
+  payer,
+  mint,
+  500_000_000n,   // amount
+  payer,          // owner
+  address("RecipientAddressHere111111111111111111111111")
+);
+console.log("Transfer tx:", transferTx);
+```
+
+## Cost Comparison
+
+| Operation | Standard SPL | Compressed |
+|---|---|---|
+| Token account rent | ~0.002 SOL | ~0.00001 SOL |
+| Savings | — | ~99% cheaper |
+
+## CLI
+
+```bash
+# Install ZK Compression CLI
+npm install -g @lightprotocol/zk-compression-cli
+
+# Check compressed token balance
+zk-compression-cli get-compressed-token-accounts --owner <address>
+```
+
+## Links
+
+- [ZK Compression Docs](https://zkcompression.com)
+- [Light Protocol](https://lightprotocol.com)
+- [npm: @lightprotocol/stateless.js](https://www.npmjs.com/package/@lightprotocol/stateless.js)
+- [npm: @lightprotocol/compressed-token](https://www.npmjs.com/package/@lightprotocol/compressed-token)
+- [GitHub](https://github.com/Lightprotocol/light-protocol)
