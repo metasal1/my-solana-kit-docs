@@ -1,0 +1,93 @@
+---
+title: MagicBlock
+description: Private SPL token payments via Ephemeral Rollups (TEE-protected)
+---
+
+[MagicBlock](https://magicblock.gg) enables **private SPL token transfers** on Solana using Private Ephemeral Rollups (PERs). Transactions are routed through TEE-protected validators (Intel TDX), making them invisible to external observers.
+
+> Production-ready API. No SDK install required — REST-based.
+
+## How It Works
+
+Tokens exist on two layers:
+1. **Base** (Solana mainnet/devnet) — standard SPL token accounts
+2. **Ephemeral** (MagicBlock PER) — TEE-protected accounts on the rollup
+
+Move tokens between layers with **deposit** (base → ephemeral) and **withdraw** (ephemeral → base). Transfer privately within the ephemeral layer.
+
+## Deposit Tokens (Base → Ephemeral)
+
+```ts
+const res = await fetch("https://payments.magicblock.app/v1/spl/deposit", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    payer: "YourWalletPublicKey",
+    amount: 1000000, // 1 USDC (6 decimals)
+  }),
+});
+
+const { transaction } = await res.json();
+// Sign and submit the base64 transaction to Solana
+```
+
+## Private Transfer
+
+```ts
+const res = await fetch("https://payments.magicblock.app/v1/spl/transfer", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    payer: "SenderPublicKey",
+    destination: "RecipientPublicKey",
+    amount: 500000, // 0.5 USDC
+    visibility: "private", // "public" or "private"
+  }),
+});
+
+const { transaction } = await res.json();
+// Sign and submit to ephemeral rollup
+```
+
+## Withdraw (Ephemeral → Base)
+
+```ts
+const res = await fetch("https://payments.magicblock.app/v1/spl/withdraw", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    payer: "YourWalletPublicKey",
+    amount: 1000000,
+  }),
+});
+
+const { transaction } = await res.json();
+// Sign and submit to ephemeral rollup
+```
+
+## Check Balance
+
+```ts
+// Base-chain balance
+const base = await fetch(
+  "https://payments.magicblock.app/v1/spl/balance?owner=YourPublicKey"
+).then((r) => r.json());
+
+// Ephemeral (private) balance
+const priv = await fetch(
+  "https://payments.magicblock.app/v1/spl/private-balance?owner=YourPublicKey"
+).then((r) => r.json());
+```
+
+## Default USDC Mints
+
+| Network | Mint |
+|---------|------|
+| Mainnet | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` |
+| Devnet | `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU` |
+
+## Links
+
+- [Docs](https://docs.magicblock.gg/pages/private-ephemeral-rollups-pers/how-to-guide/quickstart)
+- [API Base](https://payments.magicblock.app)
+- [MCP Endpoint](https://payments.magicblock.app/mcp) — for agent-to-agent tool calls
