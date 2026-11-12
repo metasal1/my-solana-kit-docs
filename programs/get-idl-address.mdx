@@ -4,13 +4,30 @@ description: Get the address of the programs IDL
 ---
 
 ## New Way
-```tsx
 
+Anchor stores the IDL at `createWithSeed(base, "anchor:idl", programId)`, where `base` is the program derived address of the program id and an empty seed list.
+
+```tsx
+import { address, createAddressWithSeed, getProgramDerivedAddress } from "@solana/kit";
+
+const programAddress = address("SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf");
+const [base] = await getProgramDerivedAddress({
+    programAddress,
+    seeds: [],
+});
+const idlAddress = await createAddressWithSeed({
+    baseAddress: base,
+    programAddress,
+    seed: "anchor:idl",
+});
+
+console.log("Base:", base);
+console.log("IDL Address:", idlAddress);
 ```
 
 ## Old Way
 ```tsx
-import { PublicKey } from '@solana/kit';
+import { PublicKey } from '@solana/web3.js';
 
 const getIDLAddress = async () => {
 

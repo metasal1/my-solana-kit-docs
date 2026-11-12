@@ -3,12 +3,13 @@ title: Get Rent
 description: 
 ---
 
+The local `getMinimumBalanceForRentExemption` helper was removed in `@solana/kit` 7. Ask the cluster. The size is a `bigint`, and the result is lamports.
+
 ```js
 import { createSolanaRpc } from "@solana/kit";
 
 const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
-const space = BigInt(0);
-const rent = await rpc.getMinimumBalanceForRentExemption(space).send();
+const rent = await rpc.getMinimumBalanceForRentExemption(0n).send();
 
-console.log(rent); 
+console.log(rent);
 ```

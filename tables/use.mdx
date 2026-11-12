@@ -17,7 +17,7 @@ import {
     compressTransactionMessageUsingAddressLookupTables,
     createTransactionMessage,
     getSignatureFromTransaction,
-    IInstruction,
+    Instruction,
     KeyPairSigner,
     pipe,
     sendAndConfirmTransactionFactory,
@@ -25,7 +25,8 @@ import {
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
     appendTransactionMessageInstructions,
-    lamports
+    lamports,
+    assertIsTransactionWithBlockhashLifetime,
 } from "@solana/kit";
 import { fetchAddressLookupTable } from "@solana-program/address-lookup-table";
 import walletSecret from "./wallet.json";
@@ -39,7 +40,7 @@ type Client = {
 export async function sendTransactionWithAlt(
     client: Client,
     payer: KeyPairSigner,
-    instructions: IInstruction[],
+    instructions: Instruction[],
     addressesByLookupTableAddress: AddressesByLookupTableAddress
 ) {
 
@@ -54,6 +55,7 @@ export async function sendTransactionWithAlt(
     );
 
     const signedTransaction = await signTransactionMessageWithSigners(tx);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
     const signature = getSignatureFromTransaction(signedTransaction);
     await sendAndConfirmTransactionFactory(client)(signedTransaction, {
         commitment: 'confirmed',
@@ -78,7 +80,7 @@ const main = async () => {
 
     console.log(addresses);
 
-    const txInstructions: IInstruction[] = [];
+    const txInstructions: Instruction[] = [];
 
     for (let i = 0; i < addresses.length; i++) {
         txInstructions.push(getTransferSolInstruction({

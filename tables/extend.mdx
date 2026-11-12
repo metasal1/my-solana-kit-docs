@@ -27,6 +27,7 @@ import {
     setTransactionMessageFeePayerSigner,
     setTransactionMessageLifetimeUsingBlockhash,
     signTransactionMessageWithSigners,
+    assertIsTransactionWithBlockhashLifetime,
 } from "@solana/kit";
 import walletSecret from "./wallet.json";
 
@@ -58,6 +59,7 @@ export async function extendAlt(
     );
 
     const signedTransaction = await signTransactionMessageWithSigners(tx);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
     const signature = getSignatureFromTransaction(signedTransaction);
     await sendAndConfirmTransactionFactory(client)(signedTransaction, {
         commitment: 'confirmed',

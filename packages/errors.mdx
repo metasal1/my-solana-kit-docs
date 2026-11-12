@@ -3,7 +3,13 @@ title: Errors
 description: Understand Solana error messages better
 ---
 
+Pass the numeric code. `123` is not a Solana error code, so `decode -- 123` exits with an error.
 
 ```bash
-npx @solana/errors decode -- 123
+npx @solana/errors decode 1
+```
+
+```text
+[Decoded] Solana error code #1
+    - The network has progressed past the last block for which this transaction could have been committed.
 ```

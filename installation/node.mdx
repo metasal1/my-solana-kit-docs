@@ -1,26 +1,23 @@
 ---
 title: Node
-description: 
+description: Install @solana/kit
 ---
 
 ```bash
 npm install @solana/kit
 ```
 
-## Install full package
-```bash
-npm install @solana/kit
-```
+`@solana/kit` 8.6.0 is the current release. It re-exports the public modules, so most snippets on this site only add the program client they call (`@solana-program/system`, `@solana-program/token`, and so on). Those clients peer-depend on `@solana/kit` ^8.5.0.
 
-There 48 modules currently. You can see them all https://github.com/solana-labs/solana-web3.js/tree/master/packages. 
+The modules live in the [Kit monorepo](https://github.com/anza-xyz/kit/tree/main/packages).
 
-Below is a list of the popular ones.
+You can still install one module when you want a smaller dependency.
 
-### Fetch and decode accounts only
+### Accounts
 ```bash
 npm install @solana/accounts
 ```
-### Coders and Decoders only
+### Codecs
 ```bash
 npm install @solana/codecs
 ```
@@ -28,11 +25,11 @@ npm install @solana/codecs
 ```bash
 npm install @solana/errors
 ```
-### Working with Solana Keys only
+### Keys
 ```bash
 npm install @solana/keys
 ```
-### RPC methods 
+### RPC
 ```bash
 npm install @solana/rpc
 ```
@@ -40,19 +37,27 @@ npm install @solana/rpc
 ```bash
 npm install @solana/rpc-subscriptions
 ```
-### Signers for creating and signing messages and transactions
+### Signers
 ```bash
 npm install @solana/signers
 ```
-### Working with System Variables
+### System variables
 ```bash
 npm install @solana/sysvars
 ```
-### Working with Transactions and Messages only
+### Transaction messages
 ```bash
 npm install @solana/transaction-messages
 ```
-### Working with Transactions only
+### Transactions
 ```bash
 npm install @solana/transactions
+```
+### Instruction plans
+```bash
+npm install @solana/instruction-plans
+```
+### Offchain messages
+```bash
+npm install @solana/offchain-messages
 ```

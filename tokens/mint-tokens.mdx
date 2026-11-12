@@ -9,7 +9,7 @@ lastUpdated: "2025-2-24"
 
 ```tsx 
 import { TOKEN_PROGRAM_ADDRESS, findAssociatedTokenPda, getMintToInstruction } from "@solana-program/token";
-import { createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory, pipe, createTransactionMessage, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, getSignatureFromTransaction, setTransactionMessageFeePayerSigner, appendTransactionMessageInstructions, createKeyPairSignerFromBytes, address } from "@solana/kit";
+import { createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory, pipe, createTransactionMessage, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, getSignatureFromTransaction, setTransactionMessageFeePayerSigner, appendTransactionMessageInstructions, createKeyPairSignerFromBytes, address, assertIsTransactionWithBlockhashLifetime } from "@solana/kit";
 
 import walletSecret from '../wallet.json';
 
@@ -33,7 +33,7 @@ async function mintTokens() {
             mint: mint,
             token: ata,
             amount: BigInt(1_000_000_000),
-            mintAuthority: payer.address
+            mintAuthority: payer
         })
     ];
 
@@ -47,6 +47,7 @@ async function mintTokens() {
     );
 
     const signedTransaction = await signTransactionMessageWithSigners(transaction);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
 
     try {
         await sendAndConfirmTransaction(signedTransaction, {
@@ -68,9 +69,9 @@ mintTokens();
 # Old Way
 
 ```tsx
-import { Connection, Keypair, PublicKey } from '@solana/kit';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { mintTo } from '@solana/spl-token';
-import walletSecret from './wallet.json' assert { type: "json" };
+import walletSecret from './wallet.json';
 
 const mintTokens = async () => {
     try {

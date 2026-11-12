@@ -3,6 +3,4 @@ title: Domains
 description: Scripts to create, transfer Solana / Bonfida Domains and Subdomains
 ---
 
-```tsx
-
-```
+`@bonfida/spl-name-service` 4.0.1 does not export a one-call registration for a top-level `.sns` name. Registration goes through the SNS registrar. Subdomain creation is `createSubdomain`, on the [create subdomain](/domains/create-subdomain) page. The package still uses `@solana/web3.js`, and the name has to end in `.sns`.

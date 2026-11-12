@@ -3,8 +3,31 @@ title: Get Programs
 description: Get all the programs currently on the Solana blockchain
 ---
 
+# New Way
+
+`dataSize` is a `bigint`. `dataSlice` asks the RPC for account addresses only, which is enough for a count. Some public RPCs still refuse `getProgramAccounts`.
+
 ```js
-import { Connection, PublicKey } from '@solana/kit';
+import { address, createSolanaRpc } from '@solana/kit';
+
+const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com');
+
+const programs = await rpc.getProgramAccounts(
+    address('BPFLoaderUpgradeab1e11111111111111111111111'),
+    {
+        encoding: 'base64',
+        dataSlice: { offset: 0, length: 0 },
+        filters: [{ dataSize: 36n }],
+    },
+).send();
+
+console.log(`Current program count: ${programs.length}`);
+```
+
+# Old Way
+
+```js
+import { Connection, PublicKey } from '@solana/web3.js';
 
 const BPF_PROGRAM_ID = 'BPFLoaderUpgradeab1e11111111111111111111111';
 const PROGRAM_DATA_SIZE = 36;
@@ -27,5 +50,4 @@ const getPrograms = async () => {
 }
 
 getPrograms();
-
 ```

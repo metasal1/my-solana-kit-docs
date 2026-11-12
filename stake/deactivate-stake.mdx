@@ -5,8 +5,55 @@ description: Deactivate stake
 
 # New Way
 
-```tsx
+Replace the stake address with your own.
 
+```tsx
+import {
+    address,
+    appendTransactionMessageInstructions,
+    assertIsTransactionWithBlockhashLifetime,
+    createKeyPairSignerFromBytes,
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+    createTransactionMessage,
+    getSignatureFromTransaction,
+    pipe,
+    sendAndConfirmTransactionFactory,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+} from "@solana/kit";
+import { getDeactivateInstruction } from "@solana-program/stake";
+import walletSecret from "../wallet.json";
+
+const deactivateStake = async () => {
+    const rpc = createSolanaRpc("http://127.0.0.1:8899");
+    const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
+    const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
+
+    const payer = await createKeyPairSignerFromBytes(new Uint8Array(walletSecret));
+    const stake = address("Stake11111111111111111111111111111111111111");
+
+    const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+    const transactionMessage = pipe(
+        createTransactionMessage({ version: 0 }),
+        (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+        (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+        (tx) => appendTransactionMessageInstructions([
+            getDeactivateInstruction({
+                stake,
+                stakeAuthority: payer,
+            }),
+        ], tx),
+    );
+
+    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
+    await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+    console.log(getSignatureFromTransaction(signedTransaction));
+};
+
+deactivateStake();
 ```
 
 # Old Way

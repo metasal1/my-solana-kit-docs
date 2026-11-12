@@ -1,26 +1,41 @@
 ---
 title: Request Airdrop
-description: 
+description: Request a devnet airdrop
 ---
 
 ## New Way
 
-```js
-import { generateKeyPairSigner, createSolanaRpc } from "@solana/kit";
+`airdropFactory` requests the airdrop and waits until it is confirmed. The amount is lamports, and the recipient is the branded address from the signer. The public `https://api.devnet.solana.com` endpoint currently answers `requestAirdrop` with HTTP 410, so point this at an RPC that still serves the faucet, or at a local validator.
 
-const keypair = await generateKeyPairSigner();
-console.log("keypair: ", keypair);
+```js
+import { airdropFactory, createSolanaRpc, createSolanaRpcSubscriptions, generateKeyPairSigner, lamports } from "@solana/kit";
+
+const signer = await generateKeyPairSigner();
+console.log("address: ", signer.address);
 
 const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const rpcSubscriptions = createSolanaRpcSubscriptions("wss://api.devnet.solana.com");
 
-const balance = await rpc.getBalance('GaxVqiQyJKQDRu6H4pfy9V6Xq19pHGr6HQKDQDv911Y4').send();
+const airdrop = airdropFactory({ rpc, rpcSubscriptions });
+await airdrop({
+    commitment: "confirmed",
+    recipientAddress: signer.address,
+    lamports: lamports(1_000_000_000n),
+});
+
+const balance = await rpc.getBalance(signer.address).send();
 console.log("balance: ", balance);
 
-const airdrop = await rpc.requestAirdrop('GaxVqiQyJKQDRu6H4pfy9V6Xq19pHGr6HQKDQDv911Y4', 2_000_000_000).send();
-console.log("airdrop: ", airdrop);
+const signature = await rpc.requestAirdrop(signer.address, lamports(1_000_000_000n)).send();
+console.log("airdrop: ", signature);
 ```
 
 ## Old Way
 ```js
+import { Connection, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
+const connection = new Connection("https://api.devnet.solana.com");
+const keypair = Keypair.generate();
+const signature = await connection.requestAirdrop(keypair.publicKey, LAMPORTS_PER_SOL);
+console.log(signature);
 ```

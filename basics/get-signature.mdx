@@ -1,16 +1,17 @@
 ---
 title: Get Signature
-description: 
+description: Get the status of a transaction signature
 ---
 
 ```js
-import { createSolanaRpc, mainnet } from "@solana/kit";
+import { createSolanaRpc, mainnet, signature } from "@solana/kit";
 
 const rpc = createSolanaRpc(mainnet("https://api.mainnet-beta.solana.com"));
 
-const signature = 'E331fz1U7fiCHfwrLq9aeWJMcyMabS5gM9e2focLu6rHdSNnD8Rwo6jVUmpcGMZQ4iRWTbVqch3RT6Gz6M87ZXX'
-
-const transaction = await rpc.getSignatureStatuses([signature], { searchTransactionHistory: true }).send()
+const transaction = await rpc.getSignatureStatuses(
+    [signature('E331fz1U7fiCHfwrLq9aeWJMcyMabS5gM9e2focLu6rHdSNnD8Rwo6jVUmpcGMZQ4iRWTbVqch3RT6Gz6M87ZXX')],
+    { searchTransactionHistory: true },
+).send();
 
 console.log(transaction);
 ```
