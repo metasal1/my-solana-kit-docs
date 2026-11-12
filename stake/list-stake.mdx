@@ -5,8 +5,21 @@ description: List stake
 
 # New Way
 
-```tsx
+A stake account is 200 bytes. `dataSlice` returns the addresses without the account data. Some public RPCs refuse `getProgramAccounts`.
 
+```tsx
+import { createSolanaRpc } from "@solana/kit";
+import { STAKE_PROGRAM_ADDRESS } from "@solana-program/stake";
+
+const rpc = createSolanaRpc("https://api.mainnet-beta.solana.com");
+
+const accounts = await rpc.getProgramAccounts(STAKE_PROGRAM_ADDRESS, {
+    encoding: "base64",
+    dataSlice: { offset: 0, length: 0 },
+    filters: [{ dataSize: 200n }],
+}).send();
+
+console.log(accounts.length);
 ```
 
 # Old Way

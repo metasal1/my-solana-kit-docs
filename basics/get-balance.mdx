@@ -5,18 +5,18 @@ description: Get SOL balance
 
 # New Way
 ```tsx
-import { createSolanaRpc } from "@solana/kit";
+import { address, createSolanaRpc, decimalFixedPointToString, lamportsToSol } from "@solana/kit";
 
 const rpc = createSolanaRpc("https://api.devnet.solana.com");
 
-const balance = await rpc.getBalance('MTSLZDJppGh6xUcnrSSbSQE5fgbvCtQ496MqgQTv8c1').send();
-console.log("balance: ", balance);
+const balance = await rpc.getBalance(address('MTSLZDJppGh6xUcnrSSbSQE5fgbvCtQ496MqgQTv8c1')).send();
+console.log(decimalFixedPointToString(lamportsToSol(balance.value)));
 ```
 
 # Old Way
 
 ```tsx
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/kit";
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 
 const connection = new Connection("https://api.devnet.solana.com");
 
@@ -29,4 +29,3 @@ const getBalance = async () => {
 
 getBalance();
 ```
-

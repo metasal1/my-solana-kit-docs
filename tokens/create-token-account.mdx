@@ -7,7 +7,7 @@ description: Create account for Solana SPL token
 
 ```tsx 
 import { getCreateAssociatedTokenIdempotentInstructionAsync, TOKEN_PROGRAM_ADDRESS, findAssociatedTokenPda } from "@solana-program/token";
-import { createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory, pipe, createTransactionMessage, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, getSignatureFromTransaction, setTransactionMessageFeePayerSigner, appendTransactionMessageInstructions, createKeyPairSignerFromBytes, address } from "@solana/kit";
+import { createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory, pipe, createTransactionMessage, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, getSignatureFromTransaction, setTransactionMessageFeePayerSigner, appendTransactionMessageInstructions, createKeyPairSignerFromBytes, address, assertIsTransactionWithBlockhashLifetime } from "@solana/kit";
 
 import walletSecret from '../wallet.json';
 
@@ -44,6 +44,7 @@ async function createAccount() {
     );
 
     const signedTransaction = await signTransactionMessageWithSigners(transaction);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
 
     try {
         await sendAndConfirmTransaction(signedTransaction, {
@@ -66,9 +67,9 @@ createAccount();
 
 ```tsx
 
-import { Connection, Keypair, PublicKey } from '@solana/kit';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
-import walletSecret from './wallet.json' assert { type: "json" };
+import walletSecret from './wallet.json';
 
 const createAccount = async () => {
     try {

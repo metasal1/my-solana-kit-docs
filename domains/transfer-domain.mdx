@@ -3,6 +3,21 @@ title: Domains
 description: Scripts to create, transfer Solana / Bonfida Domains and Subdomains
 ---
 
-```tsx
+`@bonfida/spl-name-service` 4.0.1 still uses `@solana/web3.js`. `transferDomain` only accepts a `.sns` name.
 
+```tsx
+import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { transferDomain } from "@bonfida/spl-name-service";
+import walletSecret from "./wallet.json";
+
+const DOMAIN = "example.sns";
+const NEW_OWNER = new PublicKey("GaxVqiQyJKQDRu6H4pfy9V6Xq19pHGr6HQKDQDv911Y4");
+
+const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+const wallet = Keypair.fromSecretKey(new Uint8Array(walletSecret));
+
+const instruction = await transferDomain(connection, DOMAIN, NEW_OWNER);
+const transaction = new Transaction().add(instruction);
+const signature = await sendAndConfirmTransaction(connection, transaction, [wallet]);
+console.log(signature);
 ```

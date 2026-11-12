@@ -3,50 +3,82 @@ title: Confidential Transfers
 description: Transfers tokens to destination without disclosing the amount
 ---
 
-## WEB3.JS
+Create the mint with the confidential transfer extension before `initializeMint`. `getPreInitializeInstructionsForMintExtensions` builds that instruction. `auto` in the CLI is `autoApproveNewAccounts: true`.
 
 ```tsx
-import { Connection, Keypair, clusterApiUrl } from '@solana/web3.js';
-import { createMint, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
-import walletSecret from './wallet.json'
+import {
+    appendTransactionMessageInstructions,
+    assertIsTransactionWithBlockhashLifetime,
+    createKeyPairSignerFromBytes,
+    createSolanaRpc,
+    createSolanaRpcSubscriptions,
+    createTransactionMessage,
+    generateKeyPairSigner,
+    getSignatureFromTransaction,
+    pipe,
+    sendAndConfirmTransactionFactory,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+    signTransactionMessageWithSigners,
+} from "@solana/kit";
+import { getCreateAccountInstruction } from "@solana-program/system";
+import {
+    extension,
+    getInitializeMintInstruction,
+    getMintSize,
+    getPreInitializeInstructionsForMintExtensions,
+    TOKEN_2022_PROGRAM_ADDRESS,
+} from "@solana-program/token-2022";
+import walletSecret from "./wallet.json";
 
-const wallet = Keypair.fromSecretKey(new Uint8Array(walletSecret));
-const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+const createConfidentialToken = async () => {
+    const rpc = createSolanaRpc("http://127.0.0.1:8899");
+    const rpcSubscriptions = createSolanaRpcSubscriptions("ws://127.0.0.1:8900");
+    const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
-async function createConfidentialToken() {
-    try {
-        const mintKeypair = Keypair.generate();
+    const payer = await createKeyPairSignerFromBytes(new Uint8Array(walletSecret));
+    const mint = await generateKeyPairSigner();
+    const extensions = [
+        extension("ConfidentialTransferMint", {
+            authority: payer.address,
+            autoApproveNewAccounts: true,
+            auditorElgamalPubkey: null,
+        }),
+    ];
+    const space = BigInt(getMintSize(extensions));
+    const rent = await rpc.getMinimumBalanceForRentExemption(space).send();
 
-        const mint = await createMint(
-            connection,
-            wallet,
-            wallet.publicKey,
-            null, // Freeze authority (optional)
-            0, // Decimals
-            mintKeypair,
-            { commitment: 'confirmed' },
-            TOKEN_2022_PROGRAM_ID 
-        );
-        console.log('Mint created:', mint.toBase58());
-        return mint;
-    } catch (error) {
-        console.error('Error creating token:', error);
-        throw error;
-    }
-}
+    const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+    const transactionMessage = pipe(
+        createTransactionMessage({ version: 0 }),
+        (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+        (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+        (tx) => appendTransactionMessageInstructions([
+            getCreateAccountInstruction({
+                payer,
+                newAccount: mint,
+                lamports: rent,
+                space,
+                programAddress: TOKEN_2022_PROGRAM_ADDRESS,
+            }),
+            ...getPreInitializeInstructionsForMintExtensions(mint.address, extensions),
+            getInitializeMintInstruction({
+                mint: mint.address,
+                decimals: 0,
+                mintAuthority: payer.address,
+            }),
+        ], tx),
+    );
 
-const main = async () => {
-    try {
-        const mint = await createConfidentialMint();
-        console.log('Token created:', mint.toBase58());
-    } catch (error) {
-        console.error('Error in main:', error);
-    }
-}
+    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
+    await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+    console.log(mint.address, getSignatureFromTransaction(signedTransaction));
+};
 
-main();
-
+createConfidentialToken();
 ```
+
 ## CLI
 
 There is 9 extra steps involved when dealing with Confidential Transfers using Solana Token Extensions

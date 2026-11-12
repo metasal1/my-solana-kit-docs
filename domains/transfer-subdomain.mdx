@@ -3,24 +3,26 @@ title: Transfer Subdomains
 description: Script to transfer Solana / Bonfida Subdomains
 ---
 
+`@bonfida/spl-name-service` 4.0.1 still builds `@solana/web3.js` transactions. `transferSubdomain` only accepts the `.sns` suffix.
+
 ## Old Way
 
 ```tsx
-import { Connection, Keypair, Transaction, sendAndConfirmTransaction, PublicKey, TransactionInstruction } from '@solana/kit';
-import { createSubdomain, transferSubdomain } from '@bonfida/spl-name-service';
+import { Connection, Keypair, Transaction, sendAndConfirmTransaction, PublicKey } from '@solana/web3.js';
+import { transferSubdomain } from '@bonfida/spl-name-service';
 import fs from 'fs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const SOLANA_RPC_URL = process.env.RPC_URL!;
-const WALLET_PATH = '/Users/metasal/.config/solana/id.json';
-const PARENT_DOMAIN = 'gamblethis.sol';
+const WALLET_PATH = './wallet.json';
+const PARENT_DOMAIN = 'gamblethis.sns';
 const SUBDOMAIN = 'example';
 const FULL_DOMAIN = `${SUBDOMAIN}.${PARENT_DOMAIN}`;
 const NEW_OWNER_PUBLIC_KEY = new PublicKey('GaxVqiQyJKQDRu6H4pfy9V6Xq19pHGr6HQKDQDv911Y4');
 
-const transferSubdomain = async () => {
+const main = async () => {
     try {
         console.log(`Attempting to register subdomain ${FULL_DOMAIN}...`);
 
@@ -69,7 +71,7 @@ const transferSubdomain = async () => {
         console.log(`Transaction signature: ${signature}`);
         console.log(`Solana Explorer: https://explorer.solana.com/tx/${signature}`);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error processing transaction:');
         console.error(error);
         if (error.logs) {
@@ -79,5 +81,5 @@ const transferSubdomain = async () => {
     }
 };
 
-transferSubdomain();
+main();
 ```

@@ -8,7 +8,7 @@ description: Close a SPL token account if balance is 0
 ## New Way
 
 ```tsx 
-import { createSolanaRpc, createKeyPairSignerFromBytes, address, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, signTransactionMessageWithSigners, getSignatureFromTransaction, sendAndConfirmTransactionFactory, createSolanaRpcSubscriptions } from "@solana/kit";
+import { createSolanaRpc, createKeyPairSignerFromBytes, address, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, signTransactionMessageWithSigners, getSignatureFromTransaction, sendAndConfirmTransactionFactory, createSolanaRpcSubscriptions, assertIsTransactionWithBlockhashLifetime } from "@solana/kit";
 import { getCloseAccountInstruction } from "@solana-program/token";
 import wallet from "../wallet.json";
 
@@ -27,7 +27,7 @@ const closeTokenAccount = async () => {
             getCloseAccountInstruction({
                 account: TOKEN_ACCOUNT,
                 destination: payer.address,
-                owner: payer.address,
+                owner: payer,
             })
         ];
 
@@ -41,6 +41,7 @@ const closeTokenAccount = async () => {
         );
 
         const signedTransaction = await signTransactionMessageWithSigners(transaction);
+        assertIsTransactionWithBlockhashLifetime(signedTransaction);
 
         try {
             await sendAndConfirmTransaction(signedTransaction, {
@@ -65,7 +66,7 @@ closeTokenAccount();
 ## Old Way
 
 ```tsx
-import { PublicKey, Connection, Transaction, Keypair } from "@solana/kit";
+import { PublicKey, Connection, Transaction, Keypair } from "@solana/web3.js";
 import { createCloseAccountInstruction } from "@solana/spl-token";
 import wallet from "./wallet.json";
 

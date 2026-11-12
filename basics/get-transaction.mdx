@@ -1,13 +1,15 @@
 ---
 title: Get Transaction
-description: 
+description: Fetch a confirmed transaction
 ---
 
 ```js
-import { createSolanaRpc, mainnet } from "@solana/kit";
+import { createSolanaRpc, mainnet, signature } from "@solana/kit";
 
 const rpc = createSolanaRpc(mainnet("https://api.mainnet-beta.solana.com"));
-const signature = '56K4Cdwk9YKpSTZruMNbkhuykj2E55HtCnN8o2j8xUdsthj9G8qPiMwVQBxEXWJ3yht2WGXbxjPpPCqjiSLWAGAA'
-const transaction = await rpc.getTransaction(signature).send()
+const transaction = await rpc.getTransaction(
+    signature('56K4Cdwk9YKpSTZruMNbkhuykj2E55HtCnN8o2j8xUdsthj9G8qPiMwVQBxEXWJ3yht2WGXbxjPpPCqjiSLWAGAA'),
+    { encoding: 'json', maxSupportedTransactionVersion: 0 },
+).send();
 console.log(transaction);
 ```

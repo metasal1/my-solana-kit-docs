@@ -1,12 +1,21 @@
 ---
-title: Activate Stake 
-description: Activate stake
+title: Activate Stake
+description: Read stake activation state
 ---
 
 # New Way
 
-```tsx
+Replace the stake address with your own. There is no activate instruction. `getDelegateStakeInstruction` delegates the stake, and the cluster activates it on a later epoch. `getStakeActivation` is no longer an RPC method. Read the stake account instead.
 
+```tsx
+import { address, createSolanaRpc } from "@solana/kit";
+import { fetchStakeStateAccount } from "@solana-program/stake";
+
+const rpc = createSolanaRpc("https://api.mainnet-beta.solana.com");
+const stakeAccount = address("Stake11111111111111111111111111111111111111");
+
+const account = await fetchStakeStateAccount(rpc, stakeAccount);
+console.log(account.data.state);
 ```
 
 # Old Way

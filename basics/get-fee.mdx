@@ -1,13 +1,50 @@
 ---
 title: Get Fee
-description: 
+description: Estimate the fee for a transaction message
 ---
 
+`getFeeForMessage` takes the base64-encoded compiled message. Build the message the same way you would a transaction, then compile and encode it. `createNoopSigner` stands in for the fee payer when you only need the fee and do not have the secret key.
+
 ```tsx
-import { createSolanaRpc } from "@solana/kit";
+import {
+    address,
+    appendTransactionMessageInstructions,
+    compileTransactionMessage,
+    createNoopSigner,
+    createSolanaRpc,
+    createTransactionMessage,
+    getBase64Decoder,
+    getCompiledTransactionMessageEncoder,
+    lamports,
+    pipe,
+    setTransactionMessageFeePayerSigner,
+    setTransactionMessageLifetimeUsingBlockhash,
+    type TransactionMessageBytesBase64,
+} from "@solana/kit";
+import { getTransferSolInstruction } from "@solana-program/system";
 
 const rpc = createSolanaRpc("https://api.mainnet-beta.solana.com");
+const payer = createNoopSigner(address("MTSLZDJppGh6xUcnrSSbSQE5fgbvCtQ496MqgQTv8c1"));
+const destination = address("5N1f1eyAocyfEf6SDfRzrECeMejDxQHAets83qJtkRAd");
 
-const fee = await rpc.getFeeForMessage('test').send();
+const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
+const message = pipe(
+    createTransactionMessage({ version: 0 }),
+    (tx) => setTransactionMessageFeePayerSigner(payer, tx),
+    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx),
+    (tx) => appendTransactionMessageInstructions([
+        getTransferSolInstruction({
+            source: payer,
+            destination,
+            amount: lamports(1n),
+        }),
+    ], tx),
+);
+
+const messageBase64 = getBase64Decoder().decode(
+    getCompiledTransactionMessageEncoder().encode(compileTransactionMessage(message)),
+) as TransactionMessageBytesBase64;
+
+const fee = await rpc.getFeeForMessage(messageBase64).send();
 console.log("fee: ", fee);
 ```

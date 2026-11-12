@@ -4,7 +4,7 @@ description: Send / transfer SOL
 ---
 
 ```tsx
-import { address, appendTransactionMessageInstructions, createSolanaRpc, createSolanaRpcSubscriptions, createTransactionMessage, getSignatureFromTransaction, lamports, pipe, sendAndConfirmTransactionFactory, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, createKeyPairSignerFromBytes } from "@solana/kit";
+import { address, appendTransactionMessageInstructions, assertIsTransactionWithBlockhashLifetime, createSolanaRpc, createSolanaRpcSubscriptions, createTransactionMessage, getSignatureFromTransaction, lamports, pipe, sendAndConfirmTransactionFactory, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, signTransactionMessageWithSigners, createKeyPairSignerFromBytes } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
 import wallet from '../wallet.json';
 
@@ -38,6 +38,7 @@ const transferSol = async () => {
     );
 
     const signedTransaction = await signTransactionMessageWithSigners(transaction);
+    assertIsTransactionWithBlockhashLifetime(signedTransaction);
 
     try {
         await sendAndConfirmTransaction(signedTransaction, {
@@ -59,9 +60,18 @@ transferSol();
 
 ## Old Way
 ```js
-SystemProgram.transfer({
-      fromPubkey: fromKeypair.publicKey,
-      toPubkey: toKeypair.publicKey,
-      lamports: lamportsToSend,
+import { Connection, Keypair, LAMPORTS_PER_SOL, SystemProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+
+const connection = new Connection("http://127.0.0.1:8899");
+const fromKeypair = Keypair.generate();
+const toKeypair = Keypair.generate();
+const transaction = new Transaction().add(
+    SystemProgram.transfer({
+        fromPubkey: fromKeypair.publicKey,
+        toPubkey: toKeypair.publicKey,
+        lamports: LAMPORTS_PER_SOL,
     }),
+);
+const signature = await sendAndConfirmTransaction(connection, transaction, [fromKeypair]);
+console.log(signature);
 ```

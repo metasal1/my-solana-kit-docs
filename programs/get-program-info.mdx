@@ -21,7 +21,7 @@ getProgramInfo();
 ```
 ## Old Way
 ```tsx
-import { Connection, PublicKey } from '@solana/kit';
+import { Connection, PublicKey } from '@solana/web3.js';
 
 const PROGRAM_ID = 'Qi4ioHyQKMx7LMFxDAtVz9BJAaofvSFZWSkixBwyWDD';
 
@@ -36,7 +36,7 @@ const getProgramInfo = async () => {
 
         console.log(programInfo);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching program info:', error.message);
     }
 };

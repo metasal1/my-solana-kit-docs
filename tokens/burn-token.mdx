@@ -6,7 +6,7 @@ description: Burn 1 or more SPL tokens
 ## New Way
 
 ```tsx 
-import { createSolanaRpc, createKeyPairSignerFromBytes, address, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, signTransactionMessageWithSigners, getSignatureFromTransaction, sendAndConfirmTransactionFactory, createSolanaRpcSubscriptions } from "@solana/kit";
+import { createSolanaRpc, createKeyPairSignerFromBytes, address, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, signTransactionMessageWithSigners, getSignatureFromTransaction, sendAndConfirmTransactionFactory, createSolanaRpcSubscriptions, assertIsTransactionWithBlockhashLifetime } from "@solana/kit";
 import { TOKEN_PROGRAM_ADDRESS, getBurnCheckedInstruction } from '@solana-program/token';
 import wallet from "../wallet.json";
 
@@ -27,7 +27,7 @@ const burnToken = async () => {
             getBurnCheckedInstruction({
                 account: TOKEN_ACCOUNT,
                 mint: TOKEN,
-                authority: payer.address,
+                authority: payer,
                 amount: AMOUNT,
                 decimals: 9,
             }, {
@@ -45,6 +45,7 @@ const burnToken = async () => {
         );
 
         const signedTransaction = await signTransactionMessageWithSigners(transaction);
+        assertIsTransactionWithBlockhashLifetime(signedTransaction);
 
         try {
             await sendAndConfirmTransaction(signedTransaction, {
